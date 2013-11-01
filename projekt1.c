@@ -20,7 +20,7 @@ typedef struct
 
 typedef FILE * plik;
 
-double sinus(parametry *p, int numer);
+double sinus(parametry *p, double numer);
 void wyswietlanie(tablica *s);
 void generuj(parametry *p, tablica *s);
 void zaszum(tablica *s, parametry *p);
@@ -41,6 +41,7 @@ int main(void)
         case 1:
         {
             generuj(&p, &s);
+            wyswietlanie(&s);
             break;
         }
         case 2:
@@ -57,20 +58,7 @@ int main(void)
     return 0;
 }
 
-void zapiszsygnal(tablica *s, parametry *p)
-{
-    plik sygnal; //tu cos jest zrypane
-    sygnal=fopen("sygnal_czysty.dat", "wb");
-    if(sygnal=NULL)
-        printf("error");
-    else
-    {
-        fprintf(sygnal, "%lf", s->tab[s->rozmiar-1]);
-        fclose(sygnal);
-    }
-}
-
-double sinus(parametry *p, int numer)
+double sinus(parametry *p, double numer)
 {
     return p->amplituda * sin(p->czestotliwosc_sygnalu*2*M_PI/p->czestotliwosc_probkowania*numer+
                               M_PI*p->przesuniecie/180);
@@ -109,6 +97,23 @@ void generuj(parametry *p, tablica *s)
     }
     zapiszsygnal(s, p);
     free(s->tab);
+}
+void zapiszsygnal(tablica *s, parametry *p)
+{
+    int i;
+    plik fp;
+    fp=fopen("sygnal_czysty.txt", "wt");
+    if(fp==NULL)
+    {
+        perror("błąd otwarcia pliku");
+        exit(-10);
+    }
+    else
+    {
+        for(i=0;i<s->rozmiar;i++)
+            fprintf(fp, "%lf\n", s->tab[i]);
+        fclose(fp);
+    }
 }
 void zaszum(tablica *s, parametry *p)
 {
