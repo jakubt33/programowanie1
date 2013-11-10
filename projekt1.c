@@ -31,6 +31,7 @@ void zaszum(tablica *, parametry *);
 void zapiszsygnal(double *, int*, double *);
 void wczytaj(tablica *);
 void tablica_init(tablica *, parametry *);
+void odszum(tablica *);
 
 int main(void)
 {
@@ -62,7 +63,9 @@ int main(void)
             }
             case 3:
             {
-                //odszum
+                odszum(&s);
+                zapiszsygnal(s.tabfiltr, &s.rozmiar, &p.amplituda);
+                break;
             }
             case 4:
             {
@@ -87,6 +90,15 @@ int main(void)
                 else printf("\nbrak danych");
                 break;
             }
+            case 7:
+            {
+                if(p.amplituda!=0)
+                {
+                wyswietlanie(s.tabfiltr, &s.rozmiar);
+                }
+                else printf("\nbrak danych");
+                break;
+            }
             case 9:
             {
                 wyjscie=1;
@@ -102,6 +114,19 @@ int main(void)
         free(s.tabfiltr);
     }
     return 0;
+}
+void odszum(tablica *s)
+{
+    int i=2;
+    s->tabfiltr[0]=s->tabszum[0];
+    s->tabfiltr[1]=(s->tabszum[0]+s->tabszum[1]+s->tabszum[2])/3;
+    for (i=2;i<=s->rozmiar-2;i++)
+    {
+        s->tabfiltr[i]=(s->tabszum[i-2]+s->tabszum[i-1]+s->tabszum[i]+s->tabszum[i+1]+s->tabszum[i+2])/5;
+    }
+    s->tabfiltr[s->rozmiar-1]=(s->tabszum[s->rozmiar-2]+s->tabszum[s->rozmiar-1]+s->tabszum[s->rozmiar])/3;
+    s->tabfiltr[s->rozmiar]=s->tabszum[s->rozmiar];
+    printf("\nzastosowano filtr\n");
 }
 void tablica_init(tablica *s, parametry *p)
 {
@@ -119,7 +144,7 @@ double sinus(parametry *p, double numer)
 void wyswietlanie(double *s, int *rozmiar)
 {
     int i;
-    for(i=0; i<*rozmiar; i++)
+    for(i=0; i<=*rozmiar; i++)
     {
         printf("%.2lf\t", s[i]);
     }
@@ -175,7 +200,7 @@ void zapiszsygnal(double *tablica, int *rozmiar, double *amplituda)
         fclose(np);
     }
 }
-void wczytaj(tablica *s)
+void wczytaj(tablica *s) //do poprawy
 {
     plik op;
     op=fopen("sygnal.dat", "rb");
