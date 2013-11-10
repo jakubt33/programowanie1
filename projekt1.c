@@ -25,10 +25,10 @@ typedef struct
 typedef FILE * plik;
 
 double sinus(parametry *, double );
-void wyswietlanie(double *s, int *);
+void wyswietlanie(double *, int *);
 void generuj(parametry *, tablica *);
 void zaszum(tablica *, parametry *);
-void zapiszsygnal(tablica *);
+void zapiszsygnal(double *, int*, double *);
 void wczytaj(tablica *);
 void tablica_init(tablica *, parametry *);
 
@@ -50,13 +50,13 @@ int main(void)
             case 1:
             {
                 generuj(&p, &s);
-                zapiszsygnal(&s);
+                zapiszsygnal(s.tabczysty, &s.rozmiar, &p.amplituda);
                 break;
             }
             case 2:
             {
                 zaszum(&s, &p);
-                zapiszsygnal(&s);
+                zapiszsygnal(s.tabszum, &s.rozmiar, &p.amplituda);
 
                 break;
             }
@@ -152,11 +152,11 @@ void generuj(parametry *p, tablica *s)
         s->tabczysty[i]=sinus(p,i);
     }
 }
-void zapiszsygnal(tablica *s)
+void zapiszsygnal(double *tablica, int *rozmiar, double *amplituda)
 {
     int i;
     plik np;
-    np=fopen("sygnal.dat", "wb");
+    np=fopen("sygnal.html", "wt");
     if(np==NULL)
     {
         perror("błąd otwarcia pliku");
@@ -164,7 +164,14 @@ void zapiszsygnal(tablica *s)
     }
     else
     {
-        fwrite(s, 3*(s->rozmiar)*sizeof(double)+sizeof(int), 1 , np);
+        fprintf(np, "<html>  <head>    <script type=\"text/javascript\" src=\"https://www.google.com/jsapi\"></script>    <script type=\"text/javascript\">      google.load(\"visualization\", \"1\", {packages:[\"corechart\"]});      google.setOnLoadCallback(drawChart);      function drawChart() {        var data = google.visualization.arrayToDataTable([\n['Age', 'Weight'],");
+        fclose(np);
+        fopen("sygnal.html", "at");
+        for(i=0;i<=*rozmiar;i++)
+        {
+            fprintf(np, "\n[%d, %lf],",  i, tablica[i]);
+        }
+        fprintf(np, "        ]);        var options = {          title: 'Wykres sinusoidalny',          hAxis: {title: 'x', minValue: 0, maxValue: %d},          vAxis: {title: 'f(x)', minValue: -%lf, maxValue: %lf},          legend: 'none',       pointSize: 2        };        var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));        chart.draw(data, options);      }    </script>  </head>  <body>    <div id=\"chart_div\" style=\"width: 900px; height: 500px;\"></div>  </body></html>", *rozmiar, *amplituda, *amplituda);
         fclose(np);
     }
 }
@@ -192,7 +199,7 @@ void zaszum(tablica *s, parametry *p)
     int i;
     if(p->amplituda!=0)
     {
-        for(i=0; i<s->rozmiar; i++)
+        for(i=0; i<=s->rozmiar; i++)
         {
             double szum=rand()%1000;
             szum=p->amplituda*(szum/500-1)/20;
