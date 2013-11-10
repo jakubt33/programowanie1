@@ -20,6 +20,11 @@ typedef struct
     double *tabszum;
     double *tabfiltr;
     int rozmiar;
+
+    double amplituda;
+    double przesuniecie;
+    double czestotliwosc_probkowania;
+    double czestotliwosc_sygnalu;
 } tablica;
 
 typedef FILE * plik;
@@ -194,7 +199,7 @@ void generuj(parametry *p, tablica *s)
     int czas=0;
 
     printf("Podaj amplitude sygnalu [V]: ");
-    if(scanf("%lf",&p->amplituda)==1);
+    scanf("%lf",&p->amplituda);
     printf("Podaj czestotliwosc sygnalu [Hz]: ");
     scanf("%lf",&p->czestotliwosc_sygnalu);
     printf("Podaj czestotliwosc probkowania [Hz]: ");
@@ -205,9 +210,8 @@ void generuj(parametry *p, tablica *s)
     printf("Podaj czas trwania sygnalu [s]: ");
     scanf("%d", &czas);
     if (p->amplituda<0||p->czestotliwosc_sygnalu<0||p->czestotliwosc_probkowania<p->czestotliwosc_sygnalu||p->przesuniecie<0||czas<0)
-        printf("zle dane, parametry musza byc dodatnie oraz czestotliwosc probkowania musi byc wieksza nic czestotliwosc sygnalu");
+        printf("zle dane, parametry musza byc dodatnie oraz czestotliwosc probkowania musi byc wieksza nic czestotliwosc sygnalu\n");
     else
-
     {
         s->rozmiar=czas*p->czestotliwosc_probkowania;
 
@@ -247,7 +251,7 @@ void zapiszsygnal(double *tablica, int *rozmiar, double *amplituda)
         }
         fprintf(np, "        ]);        var options = {          title: 'Wykres sinusoidalny',          hAxis: {title: 'x', minValue: 0, maxValue: %d},          vAxis: {title: 'f(x)', minValue: -%lf, maxValue: %lf},          legend: 'none',       pointSize: 2        };        var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));        chart.draw(data, options);      }    </script>  </head>  <body>    <div id=\"chart_div\" style=\"width: 900px; height: 500px;\"></div>  </body></html>", *rozmiar, *amplituda, *amplituda);
         fclose(np);
-        printf("wygenerwano sygnal do pliku sygnal.html");
+        printf("wygenerwano sygnal do pliku sygnal.html\n");
     }
 }
 void wczytaj(tablica *s) //do poprawy
