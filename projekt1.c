@@ -24,17 +24,19 @@ typedef struct
 
 typedef FILE * plik;
 
-double sinus(parametry *p, double numer);
-void wyswietlanie(double *s, int *rozmiar);
-void generuj(parametry *p, tablica *s);
-void zaszum(tablica *s, parametry *p);
-void zapiszsygnal(tablica *s);
-void wczytaj(tablica *s);
+double sinus(parametry *, double );
+void wyswietlanie(double *s, int *);
+void generuj(parametry *, tablica *);
+void zaszum(tablica *, parametry *);
+void zapiszsygnal(tablica *);
+void wczytaj(tablica *);
+void tablica_init(tablica *, parametry *);
 
 int main(void)
 {
     tablica s;
     parametry p;
+    tablica_init(&s, &p);
     int wyjscie=0;
     srand(time(NULL));
     while(wyjscie==0)
@@ -53,12 +55,9 @@ int main(void)
             }
             case 2:
             {
-                if(p.amplituda>0.1)
-                {
-                    printf("\nwszedlem w zaszumainie\n");
-                    zaszum(&s, &p);
-                    zapiszsygnal(&s);
-                }
+                zaszum(&s, &p);
+                zapiszsygnal(&s);
+
                 break;
             }
             case 3:
@@ -72,12 +71,20 @@ int main(void)
             }
             case 5:
             {
+                if(p.amplituda!=0)
+                {
                 wyswietlanie(s.tabczysty, &s.rozmiar);
+                }
+                else printf("\nbrak danych");
                 break;
             }
             case 6:
             {
+                if(p.amplituda!=0)
+                {
                 wyswietlanie(s.tabszum, &s.rozmiar);
+                }
+                else printf("\nbrak danych");
                 break;
             }
             case 9:
@@ -88,7 +95,7 @@ int main(void)
             }
         }
     }
-    if(p.amplituda>0.1)
+    if(p.amplituda!=0)
     {
         free(s.tabczysty);
         free(s.tabszum);
@@ -96,7 +103,14 @@ int main(void)
     }
     return 0;
 }
-
+void tablica_init(tablica *s, parametry *p)
+{
+    s->rozmiar=0;
+    p->amplituda=0;
+    p->czestotliwosc_probkowania=0;
+    p->czestotliwosc_sygnalu=0;
+    p->przesuniecie=0;
+}
 double sinus(parametry *p, double numer)
 {
     return p->amplituda * sin(p->czestotliwosc_sygnalu*2*M_PI/p->czestotliwosc_probkowania*numer+
@@ -184,6 +198,7 @@ void zaszum(tablica *s, parametry *p)
             szum=p->amplituda*(szum/500-1)/20;
             s->tabszum[i]=s->tabczysty[i]+szum;
         }
+        printf("\nzaszumilo, teraz mozesz wyswietlic zaszumiony sygnal\n");
     }
     else
         printf("nie ma czystego sygnalu do zaszumienia");
