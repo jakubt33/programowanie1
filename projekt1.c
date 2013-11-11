@@ -39,7 +39,6 @@ int main(void)
     tablica_init(&s);
     int wyjscie=0;
     srand(time(NULL));
-    tablica *bazasygnalow;
 
     while(wyjscie==0)
     {
@@ -53,7 +52,7 @@ int main(void)
             {
                 generuj(&s);
                 pytaniegoogle(&s, &komenda);
-                zapisdopliku(&s);
+               // zapisdopliku(&s);
                 break;
             }
             case 2:
@@ -163,50 +162,29 @@ void odczytzpliku(tablica *s)
 void odszum(tablica *s)
 {
     printf("wybierz moc filtra w sklali od 1 do 5\n");
-    int i=2 , f=0;
+    int i=0 , k=0 , f=0;
     scanf("%d", &f);
     s->tabfiltr[0]=s->tabszum[0];
-    if(f==1)
+    for(i=0;i<f-1;i++) //robienie pierwszych skrajnych wynikkow,f-1 bo tablica zaczyna sie od 0
+        {
+            for(k=0;k<=i;k++)
+                s->tabfiltr[i]+=s->tabszum[k];
+            s->tabfiltr[i]=s->tabfiltr[i]/(k);
+        }
+    for (i=f-1;i<s->rozmiar-5+(f);i++) //robienie srodkowych srednich
     {
-        for (i=0; i<=s->rozmiar-4; i++)
-            s->tabfiltr[i]=(s->tabszum[i]+s->tabszum[i+1]+s->tabszum[i+2]+s->tabszum[i+3]+s->tabszum[i+4])/5;
-        s->tabfiltr[s->rozmiar-3]=(s->tabszum[s->rozmiar-3]+s->tabszum[s->rozmiar-2]+s->tabszum[s->rozmiar-1]+s->tabszum[s->rozmiar])/4;
-        s->tabfiltr[s->rozmiar-2]=(s->tabszum[s->rozmiar-2]+s->tabszum[s->rozmiar-1]+s->tabszum[s->rozmiar])/3;
-        s->tabfiltr[s->rozmiar-1]=(s->tabszum[s->rozmiar-1]+s->tabszum[s->rozmiar])/2;
-        s->tabfiltr[s->rozmiar]=s->tabszum[s->rozmiar];
+        for (k=i-(f-1);k<=i+5-(f);k++)
+            s->tabfiltr[i]+=s->tabszum[k];
+        s->tabfiltr[i]/=5;
     }
-    if(f==2)
+
+    for(i=s->rozmiar-5+(f); i<s->rozmiar;i++) //robienie ostatnich
     {
-        for (i=1; i<=s->rozmiar-3; i++)
-            s->tabfiltr[i]=(s->tabszum[i-1]+s->tabszum[i]+s->tabszum[i+1]+s->tabszum[i+2]+s->tabszum[i+3])/5;
-        s->tabfiltr[s->rozmiar-2]=(s->tabszum[s->rozmiar-3]+s->tabszum[s->rozmiar-2]+s->tabszum[s->rozmiar-1]+s->tabszum[s->rozmiar])/4;
-        s->tabfiltr[s->rozmiar-1]=(s->tabszum[s->rozmiar-2]+s->tabszum[s->rozmiar-1]+s->tabszum[s->rozmiar])/3;
-        s->tabfiltr[s->rozmiar]=s->tabszum[s->rozmiar];
+        for(k=i;k<s->rozmiar;k++)
+            s->tabfiltr[i]+=s->tabszum[k];
+        s->tabfiltr[i]=(s->tabfiltr[i])/(s->rozmiar-i+1);
     }
-    if(f==3)
-    {
-        s->tabfiltr[1]=(s->tabszum[0]+s->tabszum[1]+s->tabszum[2])/3;
-        for (i=2; i<=s->rozmiar-2; i++)
-            s->tabfiltr[i]=(s->tabszum[i-2]+s->tabszum[i-1]+s->tabszum[i]+s->tabszum[i+1]+s->tabszum[i+2])/5;
-        s->tabfiltr[s->rozmiar-1]=(s->tabszum[s->rozmiar-2]+s->tabszum[s->rozmiar-1]+s->tabszum[s->rozmiar])/3;
-        s->tabfiltr[s->rozmiar]=s->tabszum[s->rozmiar];
-    }
-    if(f==4)
-    {
-        s->tabfiltr[1]=(s->tabszum[0]+s->tabszum[1]+s->tabszum[2])/3;
-        s->tabfiltr[2]=(s->tabszum[0]+s->tabszum[1]+s->tabszum[2]+s->tabszum[3])/4;
-        for (i=3; i<=s->rozmiar-1; i++)
-            s->tabfiltr[i]=(s->tabszum[i-3]+s->tabszum[i-2]+s->tabszum[i-1]+s->tabszum[i]+s->tabszum[i+1])/5;
-        s->tabfiltr[s->rozmiar]=s->tabszum[s->rozmiar];
-    }
-    if(f==5)
-    {
-        s->tabfiltr[1]=(s->tabszum[0]+s->tabszum[1])/2;
-        s->tabfiltr[2]=(s->tabszum[0]+s->tabszum[1]+s->tabszum[2])/3;
-        s->tabfiltr[3]=(s->tabszum[0]+s->tabszum[1]+s->tabszum[2]+s->tabszum[3])/4;
-        for (i=4; i<=s->rozmiar; i++)
-            s->tabfiltr[i]=(s->tabszum[i-4]+s->tabszum[i-3]+s->tabszum[i-2]+s->tabszum[i-1]+s->tabszum[i])/5;
-    }
+
     printf("\nzastosowano filtr\n");
 }
 void tablica_init(tablica *s)
@@ -225,7 +203,7 @@ double sinus(tablica *s, double numer)
 void wyswietlanie(double *s, int *rozmiar)
 {
     int i;
-    for(i=0; i<=*rozmiar; i++)
+    for(i=0; i<*rozmiar; i++)
     {
         printf("%.2lf\t", s[i]);
     }
@@ -259,7 +237,7 @@ void generuj(tablica *s)
 
         for(i=0; i<s->rozmiar; i++)
         {
-            s->tabczysty[i]=s->tabszum[i]=sinus(s,i);
+            s->tabczysty[i]=s->tabszum[i]=sinus(s,i); //domyslny szum =0
         }
 
     }
@@ -293,14 +271,14 @@ void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
     }
     else
     {
-        fprintf(np, "<html>  <head>    <script type=\"text/javascript\" src=\"https://www.google.com/jsapi\"></script>    <script type=\"text/javascript\">      google.load(\"visualization\", \"1\", {packages:[\"corechart\"]});      google.setOnLoadCallback(drawChart);      function drawChart() {        var data = google.visualization.arrayToDataTable([\n['Age', 'Weight'],");
+        fprintf(np, "<html> <head> <script type=\"text/javascript\" src=\"https://www.google.com/jsapi\"></script> <script type=\"text/javascript\"> google.load(\"visualization\", \"1\", {packages:[\"corechart\"]}); google.setOnLoadCallback(drawChart); function drawChart() { var data = google.visualization.arrayToDataTable([\n['Age', 'Weight'],");
         fclose(np);
         fopen("sygnal.html", "at");
-        for(i=0; i<=*rozmiar; i++)
+        for(i=0; i<*rozmiar; i++)
         {
-            fprintf(np, "\n[%d, %lf],",  i, tablica[i]);
+            fprintf(np, "\n[%d, %lf],", i, tablica[i]);
         }
-        fprintf(np, "        ]);        var options = {          title: 'Wykres sinusoidalny',          hAxis: {title: 'x', minValue: 0, maxValue: %d},          vAxis: {title: 'f(x)', minValue: -%lf, maxValue: %lf},          legend: 'none',       pointSize: 2        };        var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));        chart.draw(data, options);      }    </script>  </head>  <body>    <div id=\"chart_div\" style=\"width: 900px; height: 500px;\"></div>  </body></html>", *rozmiar, *amplituda, *amplituda);
+        fprintf(np, " ]); var options = { title: 'Wykres sinusoidalny', hAxis: {title: 'x', minValue: 0, maxValue: %d}, vAxis: {title: 'f(x)', minValue: -%lf, maxValue: %lf}, legend: 'none', pointSize: 2 }; var chart = new google.visualization.ScatterChart(document.getElementById('chart_div')); chart.draw(data, options); } </script> </head> <body> <div id=\"chart_div\" style=\"width: 900px; height: 500px;\"></div> </body></html>", *rozmiar, *amplituda, *amplituda);
         fclose(np);
         printf("wygenerwano sygnal do pliku sygnal.html\n");
     }
@@ -313,7 +291,7 @@ void zaszum(tablica *s)
         printf("jaki procent amplitudy ma stanowic szum?\n");
         int procent;
         scanf("%d", &procent);
-        for(i=0; i<=s->rozmiar; i++)
+        for(i=0; i<s->rozmiar; i++)
         {
             double szum=rand()%1000;
             szum=(s->amplituda*(szum/500-1)/100)*procent;
