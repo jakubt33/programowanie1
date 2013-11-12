@@ -32,6 +32,9 @@ void odszum(tablica *);
 void pytaniegoogle(tablica *, int *);
 void zapisdopliku(tablica *);
 void odczytzpliku(tablica *);
+void mallocuj(tablica *, int* );
+void fwritetablica(tablica *, plik, int*, char*);
+void freadtablica(tablica *, plik, int *, char *);
 
 int main(void)
 {
@@ -42,7 +45,14 @@ int main(void)
 
     while(wyjscie==0)
     {
-        printf("\n\nWitam\n'1' - utworz nowy sygnal\n'2' - dodaj szum\n'3' - odszum\n'4' - wczytaj sygnal z pliku\n'5' - wyswietl wartosci czystego sygnalu\n'6' - wyswietl wartosci zaszumionego sygnalu\n'7' - wyswietl wartosci odszumionego sygnalu\n'9' - zakoncz\n\n");
+        printf("\n\nWitam\n'1' - utworz nowy sygnal\n"
+               "'2' - dodaj szum\n"
+               "'3' - odszum\n"
+               "'4' - wczytaj sygnal z pliku\n"
+               "'5' - wyswietl wartosci czystego sygnalu\n"
+               "'6' - wyswietl wartosci zaszumionego sygnalu\n"
+               "'7' - wyswietl wartosci odszumionego sygnalu\n"
+               "'9' - zakoncz\n\n");
         int komenda=0;
         if(scanf("%d", &komenda)!=0)
         {
@@ -52,7 +62,6 @@ int main(void)
             {
                 generuj(&s);
                 pytaniegoogle(&s, &komenda);
-               // zapisdopliku(&s);
                 break;
             }
             case 2:
@@ -65,6 +74,7 @@ int main(void)
             {
                 odszum(&s);
                 pytaniegoogle(&s, &komenda);
+                zapisdopliku(&s);
                 break;
             }
             case 4:
@@ -92,7 +102,7 @@ int main(void)
             }
             case 7:
             {
-                if(s.amplituda!=0)
+                if(s.amplituda!=0) //dopisac zabezpieczenie
                 {
                     wyswietlanie(s.tabfiltr, &s.rozmiar);
                 }
@@ -117,6 +127,7 @@ int main(void)
 }
 void zapisdopliku(tablica *s)
 {
+    int rozmiar=s->rozmiar;
     plik np;
     char nazwa[MAXNAZWA];
     printf("podaj nazwe pliku z rozszerzeniem .dat\n");
@@ -125,13 +136,24 @@ void zapisdopliku(tablica *s)
     np=fopen(nazwa, "wb");
     if(np== NULL)
     {
-        perror("błąd otwarcia pliku");
+        perror("\nbłąd otwarcia pliku\n");
         exit(-10);
     }
     else
     {
-        int i=fwrite(s, 3*(s->rozmiar)*sizeof(double)+sizeof(int)+4*sizeof(double),1,np);
-        printf("utworzono/nadpisano plik: %s\nliczba zapisanych elementow wynosi %d\n", nazwa, i);
+        if(fwrite(&rozmiar, sizeof(int),1,np)==1)
+            printf("\n...poprawnie zapisano rozmiar'n");
+        fclose(np);
+    }
+    np=fopen(nazwa, "ab");
+    if(np== NULL)
+    {
+        perror("\nbłąd otwarcia pliku\n");
+        exit(-10);
+    }
+    else
+    {
+        fwritetablica(s, np, &rozmiar, nazwa);
         fclose(np);
     }
 }
@@ -139,6 +161,7 @@ void odczytzpliku(tablica *s)
 {
     plik np;
     char nazwa[MAXNAZWA];
+    int rozmiar;
     printf("podaj nazwe pliku z rozszerzeniem '.dat'(max 20znakow)\n");
     scanf("%s", nazwa);
 
@@ -150,14 +173,54 @@ void odczytzpliku(tablica *s)
     }
     else
     {
-        s->tabczysty=(double*)malloc(sizeof(double)*(MAXROZMIAR));
-        s->tabszum=(double*)malloc(sizeof(double)*(MAXROZMIAR));
-        s->tabfiltr=(double*)malloc(sizeof(double)*(MAXROZMIAR));
-        int i=fread(s, 3*MAXROZMIAR*sizeof(double)+sizeof(int)+4*sizeof(double),1,np);
-        printf("odczytano plik: %s\nliczba odczytanych elementow wynosi %d\n", nazwa, i);
-        fclose(np);
-        printf("rozmiar tablicy %lf", s->czestotliwosc_probkowania);
+        int i=fread(&rozmiar, sizeof(int),1,np);
+        printf("rozmair to %d\n", rozmiar);
+        s->rozmiar=rozmiar;
+        mallocuj(s, &rozmiar);
+        freadtablica(s, np, &rozmiar, nazwa);
+
     }
+}
+void freadtablica(tablica *s, plik np, int *rozmiar, char *nazwa)
+{
+    int counter=0;
+    counter+=fread(&s->amplituda, sizeof(double),1,np);
+    counter+=fread(&s->przesuniecie, sizeof(double),1,np);
+    counter+=fread(&s->czestotliwosc_probkowania, sizeof(double),1,np);
+    counter+=fread(&s->czestotliwosc_sygnalu, sizeof(double),1,np);
+
+    printf("...odczytano parametry\n");
+
+    counter+=fread(s->tabczysty, (*rozmiar)*sizeof(double),1, np);
+    counter+=fread(s->tabszum, (*rozmiar)*sizeof(double),1, np);
+    counter+=fread(s->tabfiltr, (*rozmiar)*sizeof(double),1, np);
+    if (counter==7)
+        printf("...poprawnie wczytano tablice i parametry do bufora\n");
+    else
+        printf("...odczytano nieprawidlowa ilosc danych, sprobuj ponownie\n");
+    fclose(np);
+
+    printf("\n\nw buforze znajduje sie teraz sygnal o parametrach:\n"
+           "amplituda = %.2lf\n"
+           "czestotliwosc sygnalu = %.2lf\n"
+           "czestotliwosc probkowania = %.2lf\n"
+           "przesuniecie =  %.2lf", s->amplituda, s->czestotliwosc_sygnalu, s->czestotliwosc_probkowania, s->przesuniecie);
+}
+void fwritetablica(tablica *s, plik np, int *rozmiar, char *nazwa)
+{
+    int counter=0;
+    counter+=fwrite(&s->amplituda, sizeof(double),1,np);
+    counter+=fwrite(&s->przesuniecie, sizeof(double),1,np);
+    counter+=fwrite(&s->czestotliwosc_probkowania, sizeof(double),1,np);
+    counter+=fwrite(&s->czestotliwosc_sygnalu, sizeof(double),1,np);
+
+    counter+=fwrite(s->tabczysty, sizeof(double)*(*rozmiar), 1, np);
+    counter+=fwrite(s->tabszum, sizeof(double)*(*rozmiar), 1, np);
+    counter+=fwrite(s->tabfiltr, sizeof(double)*(*rozmiar), 1, np);
+    if (counter==7)
+        printf("...poprawnie zapisano tablice i parametry\n", *nazwa);
+    else
+        printf("odczytano nieprawidlowa ilosc danych, sprobuj ponownie\n");
 }
 void odszum(tablica *s)
 {
@@ -165,22 +228,22 @@ void odszum(tablica *s)
     int i=0 , k=0 , f=0;
     scanf("%d", &f);
     s->tabfiltr[0]=s->tabszum[0];
-    for(i=0;i<f-1;i++) //robienie pierwszych skrajnych wynikkow,f-1 bo tablica zaczyna sie od 0
-        {
-            for(k=0;k<=i;k++)
-                s->tabfiltr[i]+=s->tabszum[k];
-            s->tabfiltr[i]=s->tabfiltr[i]/(k);
-        }
-    for (i=f-1;i<s->rozmiar-5+(f);i++) //robienie srodkowych srednich
+    for(i=0; i<f-1; i++) //robienie pierwszych skrajnych wynikkow,f-1 bo tablica zaczyna sie od 0
     {
-        for (k=i-(f-1);k<=i+5-(f);k++)
+        for(k=0; k<=i; k++)
+            s->tabfiltr[i]+=s->tabszum[k];
+        s->tabfiltr[i]=s->tabfiltr[i]/(k);
+    }
+    for (i=f-1; i<s->rozmiar-5+(f); i++) //robienie srodkowych srednich
+    {
+        for (k=i-(f-1); k<=i+5-(f); k++)
             s->tabfiltr[i]+=s->tabszum[k];
         s->tabfiltr[i]/=5;
     }
 
-    for(i=s->rozmiar-5+(f); i<s->rozmiar;i++) //robienie ostatnich
+    for(i=s->rozmiar-5+(f); i<s->rozmiar; i++) //robienie ostatnich
     {
-        for(k=i;k<s->rozmiar;k++)
+        for(k=i; k<s->rozmiar; k++)
             s->tabfiltr[i]+=s->tabszum[k];
         s->tabfiltr[i]=(s->tabfiltr[i])/(s->rozmiar-i+1);
     }
@@ -230,10 +293,7 @@ void generuj(tablica *s)
     else
     {
         s->rozmiar=czas*s->czestotliwosc_probkowania;
-
-        s->tabczysty=(double*)malloc(sizeof(double)*(s->rozmiar));
-        s->tabszum=(double*)malloc(sizeof(double)*(s->rozmiar));
-        s->tabfiltr=(double*)malloc(sizeof(double)*(s->rozmiar));
+        mallocuj(s, &s->rozmiar);
 
         for(i=0; i<s->rozmiar; i++)
         {
@@ -242,22 +302,28 @@ void generuj(tablica *s)
 
     }
 }
+void mallocuj(tablica *s, int *x)
+{
+    s->tabczysty=(double*)malloc(sizeof(double)*(*x));
+    s->tabszum=(double*)malloc(sizeof(double)*(*x));
+    s->tabfiltr=(double*)malloc(sizeof(double)*(*x));
+}
 void pytaniegoogle (tablica *s, int *jakisygnal)
 {
     printf("\nczy wygenerowac wykres sygnalu? [GOOGLE CHARTS]\n'1' - tak\ndowolna liczba - nie\n");
     int x;
     scanf("%d", &x);
     if(x==1)
-        {
-            if(*jakisygnal==1)
-                generujgoogle(s->tabczysty, &s->rozmiar, &s->amplituda);
-            else if(*jakisygnal==2)
-                generujgoogle(s->tabszum, &s->rozmiar, &s->amplituda);
-            else if(*jakisygnal==3)
-                generujgoogle(s->tabfiltr, &s->rozmiar, &s->amplituda);
-            else
-                printf("wystopil nieoczekiwany blad");
-        }
+    {
+        if(*jakisygnal==1)
+            generujgoogle(s->tabczysty, &s->rozmiar, &s->amplituda);
+        else if(*jakisygnal==2)
+            generujgoogle(s->tabszum, &s->rozmiar, &s->amplituda);
+        else if(*jakisygnal==3)
+            generujgoogle(s->tabfiltr, &s->rozmiar, &s->amplituda);
+        else
+            printf("wystapil nieoczekiwany blad");
+    }
 }
 void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
 {
@@ -278,7 +344,14 @@ void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
         {
             fprintf(np, "\n[%d, %lf],", i, tablica[i]);
         }
-        fprintf(np, " ]); var options = { title: 'Wykres sinusoidalny', hAxis: {title: 'x', minValue: 0, maxValue: %d}, vAxis: {title: 'f(x)', minValue: -%lf, maxValue: %lf}, legend: 'none', pointSize: 2 }; var chart = new google.visualization.ScatterChart(document.getElementById('chart_div')); chart.draw(data, options); } </script> </head> <body> <div id=\"chart_div\" style=\"width: 900px; height: 500px;\"></div> </body></html>", *rozmiar, *amplituda, *amplituda);
+        fprintf(np, " ]); var options = "
+                "{ title: 'Wykres sinusoidalny',"
+                "hAxis: {title: 'x', minValue: 0, maxValue: %d},"
+                "vAxis: {title: 'f(x)', minValue: -%lf, maxValue: %lf},"
+                "legend: 'none', pointSize: 2 };"
+                "var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));"
+                "chart.draw(data, options); } "
+                "</script> </head> <body> <div id=\"chart_div\" style=\"width: 900px; height: 500px;\"></div> </body></html>", *rozmiar, *amplituda, *amplituda);
         fclose(np);
         printf("wygenerwano sygnal do pliku sygnal.html\n");
     }
