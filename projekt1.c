@@ -12,6 +12,7 @@ typedef struct
     double *tabczysty;
     double *tabszum;
     double *tabfiltr;
+    char flaga[3]; //0 - sygnal czysty, 1 zaszumiony, 2 odszumiony
     int rozmiar;
 
     double amplituda;
@@ -178,7 +179,8 @@ void freadtablica(tablica *s, plik np, int *rozmiar, char *nazwa)
     counter+=fread(s->tabczysty, (*rozmiar)*sizeof(double),1, np);
     counter+=fread(s->tabszum, (*rozmiar)*sizeof(double),1, np);
     counter+=fread(s->tabfiltr, (*rozmiar)*sizeof(double),1, np);
-    if (counter==7)
+    counter+=fread(s->flaga, 3*sizeof(char),1, np);
+    if (counter==8)
         printf("...poprawnie wczytano tablice i parametry do bufora\n");
     else
         printf("...odczytano nieprawidlowa ilosc danych, sprobuj ponownie\n");
@@ -188,7 +190,14 @@ void freadtablica(tablica *s, plik np, int *rozmiar, char *nazwa)
            "amplituda = %.2lf\n"
            "czestotliwosc sygnalu = %.2lf\n"
            "czestotliwosc probkowania = %.2lf\n"
-           "przesuniecie =  %.2lf", s->amplituda, s->czestotliwosc_sygnalu, s->czestotliwosc_probkowania, s->przesuniecie);
+           "przesuniecie =  %.2lf\n", s->amplituda, s->czestotliwosc_sygnalu, s->czestotliwosc_probkowania, s->przesuniecie);
+    printf("dostepne sygnaly:\n");
+    if(s->flaga[0]==1)
+        printf("-czysty\n");
+    if(s->flaga[1]==1)
+        printf("-zaszumiony\n");
+    if(s->flaga[2]==1)
+        printf("-odszumiony\n");
 }
 void fwritetablica(tablica *s, plik np, int *rozmiar, char *nazwa)
 {
@@ -201,19 +210,22 @@ void fwritetablica(tablica *s, plik np, int *rozmiar, char *nazwa)
     counter+=fwrite(s->tabczysty, sizeof(double)*(*rozmiar), 1, np);
     counter+=fwrite(s->tabszum, sizeof(double)*(*rozmiar), 1, np);
     counter+=fwrite(s->tabfiltr, sizeof(double)*(*rozmiar), 1, np);
-    if (counter==7)
+    counter+=fwrite(s->flaga, sizeof(double)*3, 1, np);
+    if (counter==8)
         printf("...poprawnie zapisano tablice i parametry\n", *nazwa);
     else
         printf("odczytano nieprawidlowa ilosc danych, sprobuj ponownie\n");
 }
 void odszum(tablica *s)
 {
-    if(s->amplituda!=0)
+    if(s->flaga[0]==1)
     {
         int i=0 , k=0 , f=0, z=0;
         printf("z ilu elementow ma byc liczona srednia? (zazwyczaj 5)\n");
         scanf("%d", &z);
-        printf("wybierz moc filtra w sklali od 1 do %d.zalecana wartosc: %d\n"
+        if(z<s->rozmiar)
+        {
+            printf("wybierz moc filtra w sklali od 1 do %d.zalecana wartosc: %d\n"
                "UWAGA! wartosci skrajne moga przyjmowac rozbierzne wartosci\n", z, (z+1)/2);
         scanf("%d", &f);
         s->tabfiltr[0]=s->tabszum[0];
@@ -236,7 +248,10 @@ void odszum(tablica *s)
                 s->tabfiltr[i]+=s->tabszum[k];
             s->tabfiltr[i]=(s->tabfiltr[i])/z;//(s->rozmiar-i+1);
         }
+        s->flaga[2]=1;
         printf("\nzastosowano filtr\n");
+        }
+        else printf ("srednia liczona ze zbyt duzej liczby wynikow");
     }
     else
         printf("brak sygnalu do odszumienia");
@@ -248,6 +263,7 @@ void tablica_init(tablica *s)
     s->czestotliwosc_probkowania=0;
     s->czestotliwosc_sygnalu=0;
     s->przesuniecie=0;
+    s->flaga[0,0,0];
 }
 double sinus(tablica *s, double numer)
 {
@@ -256,22 +272,30 @@ double sinus(tablica *s, double numer)
 }
 void pytaniewyswietlanie(tablica *s)
 {
-    if(s->amplituda!=0)
+    if(s->flaga[0]==1)
     {
         printf("\nDane ktorego sygnalu wyswietlic?\n"
-           "'1' - sygnal czysty\n"
-           "'2' - sygnal zaszumiony\n"
-           "'3' - sygnal odszumiony\n");
-    int jakisygnal=0;
-    scanf("%d", &jakisygnal);
-    if(jakisygnal==1)
-        wyswietlanie(s->tabczysty, &s->rozmiar);
-    else if(jakisygnal==2)
-        wyswietlanie(s->tabszum, &s->rozmiar);
-    else if(jakisygnal==3)
-        wyswietlanie(s->tabfiltr, &s->rozmiar);
-    else
-        printf("niepoprawne polecenie, powrot do menu glownego\n");
+               "'1' - sygnal czysty\n"
+               "'2' - sygnal zaszumiony\n"
+               "'3' - sygnal odszumiony\n");
+        int jakisygnal=0;
+        scanf("%d", &jakisygnal);
+        if(jakisygnal==1)
+            wyswietlanie(s->tabczysty, &s->rozmiar);
+        else if(jakisygnal==2)
+        {
+            if(s->flaga[1]==1)
+                wyswietlanie(s->tabszum, &s->rozmiar);
+            else printf("brak dostepnego sygnalu w buforze");
+        }
+        else if(jakisygnal==3)
+        {
+            if(s->flaga[2]==1)
+                wyswietlanie(s->tabfiltr, &s->rozmiar);
+            else printf("brak dostepnego sygnalu w buforze");
+        }
+        else
+            printf("niepoprawne polecenie, powrot do menu glownego\n");
     }
     else printf("brak sygnalu do wyswietlenia");
 }
@@ -311,7 +335,7 @@ void generuj(tablica *s)
         {
             s->tabczysty[i]=s->tabszum[i]=sinus(s,i); //domyslny szum =0
         }
-        //s->flaga=[1,1,0];
+        s->flaga[0]=1; //falga od czystego sygnalu
 
     }
 }
@@ -330,11 +354,23 @@ void pytaniegoogle (tablica *s)
     int jakisygnal=0;
     scanf("%d", &jakisygnal);
     if(jakisygnal==1)
-        generujgoogle(s->tabczysty, &s->rozmiar, &s->amplituda);
+    {
+        if(s->flaga[0]==1)
+            generujgoogle(s->tabczysty, &s->rozmiar, &s->amplituda);
+        else printf("brak dostepnego sygnalu w buforze");
+    }
     else if(jakisygnal==2)
-        generujgoogle(s->tabszum, &s->rozmiar, &s->amplituda);
+    {
+        if(s->flaga[1]==1)
+            generujgoogle(s->tabszum, &s->rozmiar, &s->amplituda);
+        else printf("brak dostepnego sygnalu w buforze");
+    }
     else if(jakisygnal==3)
-        generujgoogle(s->tabfiltr, &s->rozmiar, &s->amplituda);
+    {
+        if(s->flaga[2]==1)
+            generujgoogle(s->tabfiltr, &s->rozmiar, &s->amplituda);
+        else printf("brak dostepnego sygnalu w buforze");
+    }
     else
         printf("niepoprawne polecenie, powrot do menu glownego\n");
 }
@@ -372,7 +408,7 @@ void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
 void zaszum(tablica *s)
 {
     int i;
-    if(s->amplituda!=0)
+    if(s->flaga[0]==1)
     {
         printf("jaki procent amplitudy ma stanowic szum?\n");
         int procent;
@@ -384,6 +420,7 @@ void zaszum(tablica *s)
             s->tabszum[i]=s->tabczysty[i]+szum;
         }
         printf("\nzaszumienie zakonczone powodzeniem\n");
+        s->flaga[1]=1;
     }
     else
         printf("nie ma czystego sygnalu do zaszumienia");
