@@ -312,6 +312,8 @@ void generuj(tablica *s)
 {
     int i=0;
     int czas=0;
+    printf("wyczyszczono bufor");
+    s->flaga[0,0,0];
 
     printf("Podaj amplitude sygnalu [V]: ");
     scanf("%lf",&s->amplituda);
