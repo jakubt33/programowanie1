@@ -29,12 +29,13 @@ void zaszum(tablica *);
 void generujgoogle(double *, int*, double *);
 void tablica_init(tablica *);
 void odszum(tablica *);
-void pytaniegoogle(tablica *, int *);
+void pytaniegoogle(tablica *);
 void zapisdopliku(tablica *);
 void odczytzpliku(tablica *);
 void mallocuj(tablica *, int* );
 void fwritetablica(tablica *, plik, int*, char*);
 void freadtablica(tablica *, plik, int *, char *);
+void pytaniewyswietlanie(tablica*);
 
 int main(void)
 {
@@ -49,9 +50,9 @@ int main(void)
                "'2' - dodaj szum\n"
                "'3' - odszum\n"
                "'4' - wczytaj sygnal z pliku\n"
-               "'5' - wyswietl wartosci czystego sygnalu\n"
-               "'6' - wyswietl wartosci zaszumionego sygnalu\n"
-               "'7' - wyswietl wartosci odszumionego sygnalu\n"
+               "'5' - wyswietl wartosci sygnalu\n"
+               "'6' - generowanie wykresu w Google CHARTS\n"
+               "'7' - zapisz do pliku\n"
                "'9' - zakoncz\n\n");
         int komenda=0;
         if(scanf("%d", &komenda)!=0)
@@ -61,20 +62,16 @@ int main(void)
             case 1:
             {
                 generuj(&s);
-                pytaniegoogle(&s, &komenda);
                 break;
             }
             case 2:
             {
                 zaszum(&s);
-                pytaniegoogle(&s, &komenda);
                 break;
             }
             case 3:
             {
                 odszum(&s);
-                pytaniegoogle(&s, &komenda);
-                zapisdopliku(&s);
                 break;
             }
             case 4:
@@ -84,29 +81,17 @@ int main(void)
             }
             case 5:
             {
-                if(s.amplituda!=0)
-                {
-                    wyswietlanie(s.tabczysty, &s.rozmiar);
-                }
-                else printf("\nbrak danych");
+                pytaniewyswietlanie(&s);
                 break;
             }
             case 6:
             {
-                if(s.amplituda!=0)
-                {
-                    wyswietlanie(s.tabszum, &s.rozmiar);
-                }
-                else printf("\nbrak danych");
+                pytaniegoogle(&s);
                 break;
             }
             case 7:
             {
-                if(s.amplituda!=0) //dopisac zabezpieczenie
-                {
-                    wyswietlanie(s.tabfiltr, &s.rozmiar);
-                }
-                else printf("\nbrak danych");
+                zapisdopliku(&s);
                 break;
             }
             case 9:
@@ -142,7 +127,7 @@ void zapisdopliku(tablica *s)
     else
     {
         if(fwrite(&rozmiar, sizeof(int),1,np)==1)
-            printf("\n...poprawnie zapisano rozmiar'n");
+            printf("\n...poprawnie zapisano rozmiar\n");
         fclose(np);
     }
     np=fopen(nazwa, "ab");
@@ -174,7 +159,6 @@ void odczytzpliku(tablica *s)
     else
     {
         int i=fread(&rozmiar, sizeof(int),1,np);
-        printf("rozmair to %d\n", rozmiar);
         s->rozmiar=rozmiar;
         mallocuj(s, &rozmiar);
         freadtablica(s, np, &rozmiar, nazwa);
@@ -224,31 +208,38 @@ void fwritetablica(tablica *s, plik np, int *rozmiar, char *nazwa)
 }
 void odszum(tablica *s)
 {
-    printf("wybierz moc filtra w sklali od 1 do 5\n");
-    int i=0 , k=0 , f=0;
-    scanf("%d", &f);
-    s->tabfiltr[0]=s->tabszum[0];
-    for(i=0; i<f-1; i++) //robienie pierwszych skrajnych wynikkow,f-1 bo tablica zaczyna sie od 0
+    if(s->amplituda!=0)
     {
-        for(k=0; k<=i; k++)
-            s->tabfiltr[i]+=s->tabszum[k];
-        s->tabfiltr[i]=s->tabfiltr[i]/(k);
-    }
-    for (i=f-1; i<s->rozmiar-5+(f); i++) //robienie srodkowych srednich
-    {
-        for (k=i-(f-1); k<=i+5-(f); k++)
-            s->tabfiltr[i]+=s->tabszum[k];
-        s->tabfiltr[i]/=5;
-    }
+        int i=0 , k=0 , f=0, z=0;
+        printf("z ilu elementow ma byc liczona srednia? (zazwyczaj 5)\n");
+        scanf("%d", &z);
+        printf("wybierz moc filtra w sklali od 1 do %d.zalecana wartosc: %d\n"
+               "UWAGA! wartosci skrajne moga przyjmowac rozbierzne wartosci\n", z, (z+1)/2);
+        scanf("%d", &f);
+        s->tabfiltr[0]=s->tabszum[0];
+        for(i=0; i<f-1; i++) //robienie pierwszych skrajnych wynikkow,f-1 bo tablica zaczyna sie od 0
+        {
+            for(k=0; k<=i; k++)
+                s->tabfiltr[i]+=s->tabszum[k];
+            s->tabfiltr[i]=s->tabfiltr[i]/z;//k+1
+        }
+        for (i=f-1; i<s->rozmiar-z+(f); i++) //robienie srodkowych srednich
+        {
+            for (k=i-(f-1); k<=i+5-(f); k++)
+                s->tabfiltr[i]+=s->tabszum[k];
+            s->tabfiltr[i]/=z;
+        }
 
-    for(i=s->rozmiar-5+(f); i<s->rozmiar; i++) //robienie ostatnich
-    {
-        for(k=i; k<s->rozmiar; k++)
-            s->tabfiltr[i]+=s->tabszum[k];
-        s->tabfiltr[i]=(s->tabfiltr[i])/(s->rozmiar-i+1);
+        for(i=s->rozmiar-z+(f); i<s->rozmiar; i++) //robienie ostatnich
+        {
+            for(k=i; k<s->rozmiar; k++)
+                s->tabfiltr[i]+=s->tabszum[k];
+            s->tabfiltr[i]=(s->tabfiltr[i])/z;//(s->rozmiar-i+1);
+        }
+        printf("\nzastosowano filtr\n");
     }
-
-    printf("\nzastosowano filtr\n");
+    else
+        printf("brak sygnalu do odszumienia");
 }
 void tablica_init(tablica *s)
 {
@@ -262,6 +253,27 @@ double sinus(tablica *s, double numer)
 {
     return s->amplituda * sin(s->czestotliwosc_sygnalu*2*M_PI/s->czestotliwosc_probkowania*numer+
                               M_PI*s->przesuniecie/180);
+}
+void pytaniewyswietlanie(tablica *s)
+{
+    if(s->amplituda!=0)
+    {
+        printf("\nDane ktorego sygnalu wyswietlic?\n"
+           "'1' - sygnal czysty\n"
+           "'2' - sygnal zaszumiony\n"
+           "'3' - sygnal odszumiony\n");
+    int jakisygnal=0;
+    scanf("%d", &jakisygnal);
+    if(jakisygnal==1)
+        wyswietlanie(s->tabczysty, &s->rozmiar);
+    else if(jakisygnal==2)
+        wyswietlanie(s->tabszum, &s->rozmiar);
+    else if(jakisygnal==3)
+        wyswietlanie(s->tabfiltr, &s->rozmiar);
+    else
+        printf("niepoprawne polecenie, powrot do menu glownego\n");
+    }
+    else printf("brak sygnalu do wyswietlenia");
 }
 void wyswietlanie(double *s, int *rozmiar)
 {
@@ -299,6 +311,7 @@ void generuj(tablica *s)
         {
             s->tabczysty[i]=s->tabszum[i]=sinus(s,i); //domyslny szum =0
         }
+        //s->flaga=[1,1,0];
 
     }
 }
@@ -308,22 +321,22 @@ void mallocuj(tablica *s, int *x)
     s->tabszum=(double*)malloc(sizeof(double)*(*x));
     s->tabfiltr=(double*)malloc(sizeof(double)*(*x));
 }
-void pytaniegoogle (tablica *s, int *jakisygnal)
+void pytaniegoogle (tablica *s)
 {
-    printf("\nczy wygenerowac wykres sygnalu? [GOOGLE CHARTS]\n'1' - tak\ndowolna liczba - nie\n");
-    int x;
-    scanf("%d", &x);
-    if(x==1)
-    {
-        if(*jakisygnal==1)
-            generujgoogle(s->tabczysty, &s->rozmiar, &s->amplituda);
-        else if(*jakisygnal==2)
-            generujgoogle(s->tabszum, &s->rozmiar, &s->amplituda);
-        else if(*jakisygnal==3)
-            generujgoogle(s->tabfiltr, &s->rozmiar, &s->amplituda);
-        else
-            printf("wystapil nieoczekiwany blad");
-    }
+    printf("\nKtory sygnal wygenerowac?[GOOGLE CHARTS]\n"
+           "'1' - sygnal czysty\n"
+           "'2' - sygnal zaszumiony\n"
+           "'3' - sygnal odszumiony\n");
+    int jakisygnal=0;
+    scanf("%d", &jakisygnal);
+    if(jakisygnal==1)
+        generujgoogle(s->tabczysty, &s->rozmiar, &s->amplituda);
+    else if(jakisygnal==2)
+        generujgoogle(s->tabszum, &s->rozmiar, &s->amplituda);
+    else if(jakisygnal==3)
+        generujgoogle(s->tabfiltr, &s->rozmiar, &s->amplituda);
+    else
+        printf("niepoprawne polecenie, powrot do menu glownego\n");
 }
 void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
 {
