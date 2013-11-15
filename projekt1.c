@@ -34,9 +34,12 @@ void pytaniegoogle(tablica *);
 void zapisdopliku(tablica *);
 void odczytzpliku(tablica *);
 void mallocuj(tablica *, int* );
-void fwritetablica(tablica *, plik, int*, char*);
-void freadtablica(tablica *, plik, int *, char *);
+void fwritetablica(tablica *, plik, int*);
+void freadtablica(tablica *, plik, int *);
 void pytaniewyswietlanie(tablica*);
+void freetab(tablica *);
+void error();
+
 
 int main(void)
 {
@@ -55,9 +58,15 @@ int main(void)
                "'6' - generowanie wykresu w Google CHARTS\n"
                "'7' - zapisz do pliku\n"
                "'9' - zakoncz\n\n");
-        int komenda=0;
-        if(scanf("%d", &komenda)!=0)
+        int komenda=0, temp;
+        Process.Start("nowy.html");
+        if(scanf("%d", &temp)!=1)
         {
+            error();
+        }
+        else if (temp<10&&temp>0)
+        {
+            komenda=temp;
             switch(komenda)
             {
             case 1:
@@ -105,11 +114,20 @@ int main(void)
     }
     if(s.amplituda!=0)
     {
-        free(s.tabczysty);
-        free(s.tabszum);
-        free(s.tabfiltr);
+        freetab(&s);
     }
     return 0;
+}
+void error()
+{
+    printf("zle dane\n");
+    getchar();
+}
+void freetab(tablica *s)
+{
+    free(s->tabczysty);
+    free(s->tabszum);
+    free(s->tabfiltr);
 }
 void zapisdopliku(tablica *s)
 {
@@ -139,7 +157,7 @@ void zapisdopliku(tablica *s)
     }
     else
     {
-        fwritetablica(s, np, &rozmiar, nazwa);
+        fwritetablica(s, np, &rozmiar);
         fclose(np);
     }
 }
@@ -162,11 +180,11 @@ void odczytzpliku(tablica *s)
         int i=fread(&rozmiar, sizeof(int),1,np);
         s->rozmiar=rozmiar;
         mallocuj(s, &rozmiar);
-        freadtablica(s, np, &rozmiar, nazwa);
+        freadtablica(s, np, &rozmiar);
 
     }
 }
-void freadtablica(tablica *s, plik np, int *rozmiar, char *nazwa)
+void freadtablica(tablica *s, plik np, int *rozmiar)
 {
     int counter=0;
     counter+=fread(&s->amplituda, sizeof(double),1,np);
@@ -181,16 +199,13 @@ void freadtablica(tablica *s, plik np, int *rozmiar, char *nazwa)
     counter+=fread(s->tabfiltr, (*rozmiar)*sizeof(double),1, np);
     counter+=fread(s->flaga, 3*sizeof(char),1, np);
     if (counter==8)
-        printf("...poprawnie wczytano tablice i parametry do bufora\n");
-    else
-        printf("...odczytano nieprawidlowa ilosc danych, sprobuj ponownie\n");
-    fclose(np);
-
-    printf("\n\nw buforze znajduje sie teraz sygnal o parametrach:\n"
+        {
+            printf("...poprawnie wczytano tablice i parametry do bufora\n");
+            printf("\n\nw buforze znajduje sie teraz sygnal o parametrach:\n"
            "amplituda = %.2lf\n"
            "czestotliwosc sygnalu = %.2lf\n"
            "czestotliwosc probkowania = %.2lf\n"
-           "przesuniecie =  %.2lf\n", s->amplituda, s->czestotliwosc_sygnalu, s->czestotliwosc_probkowania, s->przesuniecie);
+           "przesuniecie = %.2lf\n", s->amplituda, s->czestotliwosc_sygnalu, s->czestotliwosc_probkowania, s->przesuniecie);
     printf("dostepne sygnaly:\n");
     if(s->flaga[0]==1)
         printf("-czysty\n");
@@ -198,8 +213,12 @@ void freadtablica(tablica *s, plik np, int *rozmiar, char *nazwa)
         printf("-zaszumiony\n");
     if(s->flaga[2]==1)
         printf("-odszumiony\n");
+        }
+    else
+        printf("...odczytano nieprawidlowa ilosc danych, sprobuj ponownie\n");
+    fclose(np);
 }
-void fwritetablica(tablica *s, plik np, int *rozmiar, char *nazwa)
+void fwritetablica(tablica *s, plik np, int *rozmiar)
 {
     int counter=0;
     counter+=fwrite(&s->amplituda, sizeof(double),1,np);
@@ -212,7 +231,7 @@ void fwritetablica(tablica *s, plik np, int *rozmiar, char *nazwa)
     counter+=fwrite(s->tabfiltr, sizeof(double)*(*rozmiar), 1, np);
     counter+=fwrite(s->flaga, sizeof(double)*3, 1, np);
     if (counter==8)
-        printf("...poprawnie zapisano tablice i parametry\n", *nazwa);
+        printf("...poprawnie zapisano tablice i parametry\n");
     else
         printf("odczytano nieprawidlowa ilosc danych, sprobuj ponownie\n");
 }
@@ -220,41 +239,54 @@ void odszum(tablica *s)
 {
     if(s->flaga[0]==1)
     {
-        int i=0 , k=0 , f=0, z=0;
+        int i=0 , k=0 , f=0, z=0, temp=0;
         printf("z ilu elementow ma byc liczona srednia? (zazwyczaj 5)\n");
-        scanf("%d", &z);
-        if(z<s->rozmiar)
+        if(scanf("%d", &temp)!=1)
         {
-            printf("wybierz moc filtra w sklali od 1 do %d.zalecana wartosc: %d\n"
-               "UWAGA! wartosci skrajne moga przyjmowac rozbierzne wartosci\n", z, (z+1)/2);
-        scanf("%d", &f);
-        s->tabfiltr[0]=s->tabszum[0];
-        for(i=0; i<f-1; i++) //robienie pierwszych skrajnych wynikkow,f-1 bo tablica zaczyna sie od 0
-        {
-            for(k=0; k<=i; k++)
-                s->tabfiltr[i]+=s->tabszum[k];
-            s->tabfiltr[i]=s->tabfiltr[i]/z;//k+1
+            error();
         }
-        for (i=f-1; i<s->rozmiar-z+(f); i++) //robienie srodkowych srednich
+        else if (temp<s->rozmiar)
         {
-            for (k=i-(f-1); k<=i+5-(f); k++)
-                s->tabfiltr[i]+=s->tabszum[k];
-            s->tabfiltr[i]/=z;
-        }
+            z=temp;
 
-        for(i=s->rozmiar-z+(f); i<s->rozmiar; i++) //robienie ostatnich
-        {
-            for(k=i; k<s->rozmiar; k++)
-                s->tabfiltr[i]+=s->tabszum[k];
-            s->tabfiltr[i]=(s->tabfiltr[i])/z;//(s->rozmiar-i+1);
-        }
-        s->flaga[2]=1;
-        printf("\nzastosowano filtr\n");
+            printf("wybierz moc filtra w sklali od 1 do %d.zalecana wartosc: %d\n"
+                   "UWAGA! wartosci skrajne moga przyjmowac rozbierzne wartosci\n", z, (z+1)/2);
+            if(scanf("%d", &temp)!=1)
+            {
+                error();
+            }
+            else
+            {
+                f=temp;
+            s->tabfiltr[0]=s->tabszum[0];
+            for(i=0; i<f-1; i++) //robienie pierwszych skrajnych wynikkow,f-1 bo tablica zaczyna sie od 0
+            {
+                for(k=0; k<=i; k++)
+                    s->tabfiltr[i]+=s->tabszum[k];
+                s->tabfiltr[i]=s->tabfiltr[i]/z;//k+1
+            }
+            for (i=f-1; i<s->rozmiar-z+(f); i++) //robienie srodkowych srednich
+            {
+                for (k=i-(f-1); k<=i+5-(f); k++)
+                    s->tabfiltr[i]+=s->tabszum[k];
+                s->tabfiltr[i]/=z;
+            }
+
+            for(i=s->rozmiar-z+(f); i<s->rozmiar; i++) //robienie ostatnich
+            {
+                for(k=i; k<s->rozmiar; k++)
+                    s->tabfiltr[i]+=s->tabszum[k];
+                s->tabfiltr[i]=(s->tabfiltr[i])/z;//(s->rozmiar-i+1);
+            }
+            s->flaga[2]=1;
+            printf("\nzastosowano filtr\n");
+            }
         }
         else printf ("srednia liczona ze zbyt duzej liczby wynikow");
     }
+
     else
-        printf("brak sygnalu do odszumienia");
+    printf("brak sygnalu do odszumienia");
 }
 void tablica_init(tablica *s)
 {
@@ -312,8 +344,8 @@ void generuj(tablica *s)
 {
     int i=0;
     int czas=0;
-    printf("wyczyszczono bufor");
-    s->flaga[0,0,0];
+    printf("..wyczyszczono bufor\n");
+    tablica_init(s);
 
     printf("Podaj amplitude sygnalu [V]: ");
     scanf("%lf",&s->amplituda);
@@ -388,7 +420,13 @@ void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
     }
     else
     {
-        fprintf(np, "<html> <head> <script type=\"text/javascript\" src=\"https://www.google.com/jsapi\"></script> <script type=\"text/javascript\"> google.load(\"visualization\", \"1\", {packages:[\"corechart\"]}); google.setOnLoadCallback(drawChart); function drawChart() { var data = google.visualization.arrayToDataTable([\n['Age', 'Weight'],");
+        fprintf(np, "<html> <head>  <script type=\"text/javascript\" "
+               " src=\"https://www.google.com/jsapi\">"
+               " </script> <script type=\"text/javascript\"> "
+               " google.load(\"visualization\", \"1\","
+               " {packages:[\"corechart\"]});"
+               " google.setOnLoadCallback(drawChart);"
+               " function drawChart() { var data = google.visualization.arrayToDataTable([\n['x', 'f(x)'],");
         fclose(np);
         fopen("sygnal.html", "at");
         for(i=0; i<*rozmiar; i++)
@@ -402,7 +440,7 @@ void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
                 "legend: 'none', pointSize: 2 };"
                 "var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));"
                 "chart.draw(data, options); } "
-                "</script> </head> <body> <div id=\"chart_div\" style=\"width: 900px; height: 500px;\"></div> </body></html>", *rozmiar, *amplituda, *amplituda);
+                "</script> </head> <body> <div id=\"chart_div\" style=\"width: 900px; height: 500x;\"></div> </body></html>", *rozmiar, *amplituda, *amplituda);
         fclose(np);
         printf("wygenerwano sygnal do pliku sygnal.html\n");
     }
