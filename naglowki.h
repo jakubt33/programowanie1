@@ -6,7 +6,7 @@
 #include <time.h>
 
 #define MAXROZMIAR 1000
-#define MAXNAZWA 20
+#define MAXNAZWA 23
 
 typedef struct
 {
@@ -42,6 +42,14 @@ void pytaniewyswietlanie(tablica*);
 void freetab(tablica *);
 void error();
 void srand_init();
+void powitanie();
+
+void powitanie()
+{
+    printf("PRAGRAM NAPISANY NA ZAJĘCIA\n"
+           "PROGRAMOWANIE W C, MGR INŻ. MARIUSZ OSTROWSKI\n"
+           "PRZEZ: JAKUB TRZYNA 205687 W-10\n\n");
+}
 
 void srand_init()
 {
@@ -49,7 +57,7 @@ void srand_init()
 }
 void error()
 {
-    printf("zle dane\n");
+    printf("złe dane\n");
     while((getchar()) != '\n');
 }
 void freetab(tablica *s)
@@ -63,8 +71,8 @@ void zapisdopliku(tablica *s)
     int rozmiar=s->rozmiar;
     plik np;
     char nazwa[MAXNAZWA];
-    printf("podaj nazwe pliku z rozszerzeniem '.dat' (max 20znakow)\n");
-    if(scanf("%s", nazwa))
+    printf("podaj nazwę pliku z rozszerzeniem '.dat' (max 20znakow)\n");
+    if(scanf("%24s", nazwa))
     {
         np=fopen(nazwa, "wb");
         if(np== NULL)
@@ -90,14 +98,14 @@ void zapisdopliku(tablica *s)
         }
         fclose(np);
     }
-    else printf("blad w nazwie\n");
+    else printf("błąd w nazwie\n");
 }
 void odczytzpliku(tablica *s)
 {
     plik np;
     char nazwa[MAXNAZWA];
-    printf("podaj nazwe pliku z rozszerzeniem '.dat'\n");
-    if(scanf("%s", nazwa))
+    printf("podaj nazwę pliku z rozszerzeniem '.dat'\n");
+    if(scanf("%24s", nazwa))
     {
         np=fopen(nazwa, "rb");
         if(np==NULL)
@@ -113,11 +121,11 @@ void odczytzpliku(tablica *s)
                 mallocuj(s, &s->rozmiar);
                 freadtablica(s, np, &s->rozmiar);
             }
-            else printf("...blad odczytu rozmiaru\n");
+            else printf("...błąd odczytu rozmiaru\n");
         }
         fclose(np);
     }
-    else printf("blad w nazwie\n");
+    else printf("błąd w nazwie\n");
 }
 void freadtablica(tablica *s, plik np, int *rozmiar)
 {
@@ -135,13 +143,13 @@ void freadtablica(tablica *s, plik np, int *rozmiar)
     counter+=fread(s->flaga, 3*sizeof(char),1, np);
     if (counter==8)
     {
-        printf("...poprawnie wczytano tablice i parametry do bufora\n");
-        printf("\n\nw buforze znajduje sie teraz sygnal o parametrach:\n"
+        printf("...poprawnie wczytano tablicę i parametry do bufora\n");
+        printf("\n\nw buforze znajduje sie teraz sygnał o parametrach:\n"
                "amplituda = %.2lf\n"
-               "czestotliwosc sygnalu = %.2lf\n"
-               "czestotliwosc probkowania = %.2lf\n"
-               "przesuniecie = %.2lf\n", s->amplituda, s->czestotliwosc_sygnalu, s->czestotliwosc_probkowania, s->przesuniecie);
-        printf("dostepne sygnaly:\n");
+               "częstotliwość sygnału = %.2lf\n"
+               "częstotliwość probkowania = %.2lf\n"
+               "przesunięcie = %.2lf\n", s->amplituda, s->czestotliwosc_sygnalu, s->czestotliwosc_probkowania, s->przesuniecie);
+        printf("dostępne sygnały:\n");
         if(s->flaga[0]==1)
             printf("-czysty\n");
         if(s->flaga[1]==1)
@@ -150,7 +158,7 @@ void freadtablica(tablica *s, plik np, int *rozmiar)
             printf("-odszumiony\n");
     }
     else
-        printf("...odczytano nieprawidlowa ilosc danych, sprobuj ponownie\n");
+        printf("...odczytano nieprawidlową ilość danych\n");
 }
 void fwritetablica(tablica *s, plik np, int *rozmiar)
 {
@@ -164,17 +172,20 @@ void fwritetablica(tablica *s, plik np, int *rozmiar)
     counter+=fwrite(s->tabszum, sizeof(double)*(*rozmiar), 1, np);
     counter+=fwrite(s->tabfiltr, sizeof(double)*(*rozmiar), 1, np);
     counter+=fwrite(s->flaga, sizeof(double)*3, 1, np);
+
+    fflush(stdout);
+
     if (counter==8)
-        printf("...poprawnie zapisano tablice i parametry\n");
+        printf("...poprawnie zapisano tablicę i parametry\n");
     else
-        printf("odczytano nieprawidlowa ilosc danych, sprobuj ponownie\n");
+        printf("odczytano nieprawidlowa ilosc danych\n");
 }
 void odszum(tablica *s)
 {
     if(s->flaga[0]==1)
     {
         int i=0 , k=0 , f=0, z=0, temp=0;
-        printf("z ilu elementow ma byc liczona srednia? (zazwyczaj 5)\n");
+        printf("z ilu elementow ma być liczona średnia? (zazwyczaj 5)\n");
         if(scanf("%d", &temp)!=1)
         {
             error();
@@ -183,8 +194,8 @@ void odszum(tablica *s)
         {
             z=temp;
 
-            printf("Wybierz na ktorym miejscu od 1 do %d wstawiac srednia. Zalecana wartosc: %d\n"
-                   "UWAGA! wartosci skrajne moga przyjmowac rozbierzne wartosci\n", z, (z+1)/2);
+            printf("Wybierz na którym miejscu od 1 do %d wstawiać średnią. Zalecana wartość: %d\n"
+                   "UWAGA! wartości skrajne mogą przyjmować rozbierzne wartosci\n", z, (z+1)/2);
             if(scanf("%d", &temp)!=1)
             {
                 error();
@@ -197,7 +208,7 @@ void odszum(tablica *s)
                 {
                     for(k=0; k<=i; k++)
                         s->tabfiltr[i]+=s->tabszum[k];
-                    s->tabfiltr[i]=s->tabfiltr[i]/z;//ewentualnie /(k+1)
+                    s->tabfiltr[i]=s->tabfiltr[i]/(k+1);//ewentualnie /(k+1) lub /z
                 }
                 for (i=f-1; i<s->rozmiar-z+(f); i++) //robienie srodkowych srednich
                 {
@@ -210,18 +221,18 @@ void odszum(tablica *s)
                 {
                     for(k=i; k<s->rozmiar; k++)
                         s->tabfiltr[i]+=s->tabszum[k];
-                    s->tabfiltr[i]=(s->tabfiltr[i])/z;//ewentualnie /(s->rozmiar-i+1);
+                    s->tabfiltr[i]=(s->tabfiltr[i])/(s->rozmiar-i+1);//ewentualnie /(s->rozmiar-i+1); lub /z
                 }
                 s->flaga[2]=1;
                 printf("\nzastosowano filtr\n");
             }
-            else printf ("zle dane\n");
+            else printf ("złe dane\n");
         }
-        else printf ("srednia liczona ze zbyt duzej liczby wynikow\n");
+        else printf ("średnia liczona ze zbyt dużej liczby wynikow\n");
     }
 
     else
-        printf("brak sygnalu do odszumienia\n,m");
+        printf("brak sygnału do odszumienia\n,m");
 }
 void tablica_init(tablica *s)
 {
@@ -241,10 +252,10 @@ void pytaniewyswietlanie(tablica *s)
 {
     if(s->flaga[0]==1)
     {
-        printf("\nDane ktorego sygnalu wyswietlic?\n"
-               "'1' - sygnal czysty\n"
-               "'2' - sygnal zaszumiony\n"
-               "'3' - sygnal odszumiony\n");
+        printf("\nDane którego sygnału wyswietlić?\n"
+               "'1' - sygnał czysty\n"
+               "'2' - sygnał zaszumiony\n"
+               "'3' - sygnał odszumiony\n");
         int jakisygnal=0;
         if(scanf("%d", &jakisygnal))
         {
@@ -254,19 +265,19 @@ void pytaniewyswietlanie(tablica *s)
             {
                 if(s->flaga[1]==1)
                     wyswietlanie(s->tabszum, &s->rozmiar);
-                else printf("brak dostepnego sygnalu w buforze\n");
+                else printf("brak dostępnego sygnału w buforze\n");
             }
             else if(jakisygnal==3)
             {
                 if(s->flaga[2]==1)
                     wyswietlanie(s->tabfiltr, &s->rozmiar);
-                else printf("brak dostepnego sygnalu w buforze\n");
+                else printf("brak dostępnego sygnału w buforze\n");
             }
-            else printf("zle dane\n");
+            else printf("złe dane\n");
         }
-        else printf ("zle dane\n");
+        else printf ("złe dane\n");
     }
-    else printf("brak sygnalu do wyswietlenia\n");
+    else printf("brak sygnału do wyświetlenia\n");
 }
 void wyswietlanie(double *s, int *rozmiar)
 {
@@ -284,7 +295,7 @@ void generuj(tablica *s)
     tablica_init(s);
     printf("..wyczyszczono bufor\n");
 
-    printf("Podaj amplitude sygnalu [V]: ");
+    printf("Podaj amplitudę sygnału [V]: ");
     if(scanf("%lf", &temp)!=1)
     {
         error();
@@ -292,7 +303,7 @@ void generuj(tablica *s)
     else
     {
         s->amplituda=temp;
-        printf("Podaj czestotliwosc sygnalu [Hz]: ");
+        printf("Podaj częstotliwość sygnału [Hz]: ");
         if(scanf("%lf", &temp)!=1)
         {
             error();
@@ -300,7 +311,7 @@ void generuj(tablica *s)
         else
         {
             s->czestotliwosc_sygnalu=temp;
-            printf("Podaj czestotliwosc probkowania [Hz]: ");
+            printf("Podaj częstotliwość próbkowania [Hz]: ");
             if(scanf("%lf",&temp)!=1)
             {
                 error();
@@ -308,7 +319,7 @@ void generuj(tablica *s)
             else
             {
                 s->czestotliwosc_probkowania=temp;
-                printf("Podaj przesuniecie fazowe [stopnie]: ");
+                printf("Podaj przesunięcie fazowe [stopnie]: ");
                 if(scanf("%lf",&temp)!=1)
                 {
                     error();
@@ -316,7 +327,7 @@ void generuj(tablica *s)
                 else
                 {
                     s->przesuniecie=temp;
-                    printf("Podaj czas trwania sygnalu [s]: ");
+                    printf("Podaj czas trwania sygnału [s]: ");
                     if(scanf("%lf", &temp)!=1)
                     {
                         error();
@@ -325,7 +336,7 @@ void generuj(tablica *s)
                     {
                         czas=temp;
                         if (s->amplituda<0||s->czestotliwosc_sygnalu<0||s->czestotliwosc_probkowania<s->czestotliwosc_sygnalu||s->przesuniecie<0||czas<0)
-                            printf("zle dane, parametry musza byc dodatnie oraz czestotliwosc probkowania musi byc wieksza nic czestotliwosc sygnalu\n");
+                            printf("złe dane, parametry muszą być dodatnie oraz częstotliwość próbkowania musi byc większa niż częstotliwość sygnału\n");
                         else
                         {
                             s->rozmiar=czas*s->czestotliwosc_probkowania;
@@ -352,10 +363,10 @@ void mallocuj(tablica *s, int *x)
 }
 void pytaniegoogle (tablica *s)
 {
-    printf("\nKtory sygnal wygenerowac?[GOOGLE CHARTS]\n"
-           "'1' - sygnal czysty\n"
-           "'2' - sygnal zaszumiony\n"
-           "'3' - sygnal odszumiony\n");
+    printf("\nKtóry sygnał wygenerować?[GOOGLE CHARTS]\n"
+           "'1' - sygnał czysty\n"
+           "'2' - sygnał zaszumiony\n"
+           "'3' - sygnał odszumiony\n");
     int jakisygnal=0, temp;
     if(scanf("%d", &temp)!=1)
     {
@@ -371,25 +382,25 @@ void pytaniegoogle (tablica *s)
         {
             if(s->flaga[0]==1)
                 generujgoogle(s->tabczysty, &s->rozmiar, &s->amplituda);
-            else printf("brak dostepnego sygnalu w buforze");
+            else printf("brak dostępnego sygnału w buforze");
             break;
         }
         case 2:
         {
             if(s->flaga[1]==1)
                 generujgoogle(s->tabszum, &s->rozmiar, &s->amplituda);
-            else printf("brak dostepnego sygnalu w buforze");
+            else printf("brak dostępnego sygnału w buforze");
             break;
         }
         case 3:
         {
             if(s->flaga[2]==1)
                 generujgoogle(s->tabfiltr, &s->rozmiar, &s->amplituda);
-            else printf("brak dostepnego sygnalu w buforze");
+            else printf("brak dostępnego sygnału w buforze");
             break;
         }
         default:
-            printf("niepoprawne polecenie, powrot do menu glownego\n");
+            printf("niepoprawne polecenie\n");
             break;
         }
     }
@@ -413,6 +424,7 @@ void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
                 " {packages:[\"corechart\"]});"
                 " google.setOnLoadCallback(drawChart);"
                 " function drawChart() { var data = google.visualization.arrayToDataTable([\n['x', 'f(x)'],");
+        fflush(stdout);
         fclose(np);
 
         np=fopen("sygnal.html", "at");
@@ -427,6 +439,7 @@ void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
             {
                 fprintf(np, "\n[%d, %lf],", i, tablica[i]);
             }
+            fflush(stdout);
             fprintf(np, " ]); var options = "
                     "{ title: 'Wykres sinusoidalny',"
                     "hAxis: {title: 'x', minValue: 0, maxValue: %d},"
@@ -435,9 +448,10 @@ void generujgoogle(double *tablica, int *rozmiar, double *amplituda)
                     "var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));"
                     "chart.draw(data, options); } "
                     "</script> </head> <body> <div id=\"chart_div\" style=\"width: 900px; height: 500px;\"></div> </body></html>", *rozmiar, *amplituda, *amplituda);
+            fflush(stdout);
             fclose(np);
         }
-        printf("wygenerwano sygnal do pliku sygnal.html\n");
+        printf("wygenerwano sygnał do pliku sygnal.html\n");
     }
 }
 void zaszum(tablica *s)
