@@ -1,3 +1,10 @@
+/*
+    PRAGRAM NAPISANY NA ZAJECIA
+    PROGRAMOWANIE W C, MGR INZ. MARIUSZ OSTROWSKI
+    PRZEZ:
+    JAKUB TRZYNA 205687 W-10
+*/
+
 #include <stdio.h>
 
 #include "naglowki.h"
@@ -7,18 +14,20 @@ int main(void)
     tablica s;
     tablica_init(&s);
     srand_init();
+    powitanie();
 
     int wyjscie=0;
     while(wyjscie==0)
     {
-        printf("\n\nWitam\n'1' - utworz nowy sygnal\n"
+        printf("\n\nWitam\n"
+               "'1' - utwórz nowy sygnał\n"
                "'2' - dodaj szum\n"
                "'3' - odszum\n"
-               "'4' - wczytaj sygnal z pliku\n"
-               "'5' - wyswietl wartosci sygnalu\n"
+               "'4' - wczytaj sygnał z pliku\n"
+               "'5' - wyswietl wartosci sygnału\n"
                "'6' - generowanie wykresu w Google CHARTS\n"
                "'7' - zapisz do pliku\n"
-               "'9' - zakoncz\n\n");
+               "'9' - zakończ\n\n");
         int komenda=0, temp;
         if(scanf("%d", &temp)!=1)
         {
