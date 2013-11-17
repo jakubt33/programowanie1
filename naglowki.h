@@ -68,37 +68,41 @@ void freetab(tablica *s)
 }
 void zapisdopliku(tablica *s)
 {
-    int rozmiar=s->rozmiar;
-    plik np;
-    char nazwa[MAXNAZWA];
-    printf("podaj nazwę pliku z rozszerzeniem '.dat' (max 20znakow)\n");
-    if(scanf("%24s", nazwa))
+    if(s->flaga[0]==1)
     {
-        np=fopen(nazwa, "wb");
-        if(np== NULL)
+        int rozmiar=s->rozmiar;
+        plik np;
+        char nazwa[MAXNAZWA];
+        printf("podaj nazwę pliku z rozszerzeniem '.dat' (max 20znakow)\n");
+        if(scanf("%24s", nazwa))
         {
-            perror("\nbłąd otwarcia pliku\n");
-            exit(-10);
+            np=fopen(nazwa, "wb");
+            if(np== NULL)
+            {
+                perror("\nbłąd otwarcia pliku\n");
+                exit(-10);
+            }
+            else
+            {
+                if(fwrite(&rozmiar, sizeof(int),1,np)==1)
+                    printf("\n...poprawnie zapisano rozmiar\n");
+            }
+            fclose(np);
+            np=fopen(nazwa, "ab");
+            if(np== NULL)
+            {
+                perror("\nbłąd otwarcia pliku\n");
+                exit(-10);
+            }
+            else
+            {
+                fwritetablica(s, np, &rozmiar);
+            }
+            fclose(np);
         }
-        else
-        {
-            if(fwrite(&rozmiar, sizeof(int),1,np)==1)
-                printf("\n...poprawnie zapisano rozmiar\n");
-        }
-        fclose(np);
-        np=fopen(nazwa, "ab");
-        if(np== NULL)
-        {
-            perror("\nbłąd otwarcia pliku\n");
-            exit(-10);
-        }
-        else
-        {
-            fwritetablica(s, np, &rozmiar);
-        }
-        fclose(np);
+        else printf("błąd w nazwie\n");
     }
-    else printf("błąd w nazwie\n");
+    else printf("brak sygnalu do zapisania");
 }
 void odczytzpliku(tablica *s)
 {
@@ -232,7 +236,7 @@ void odszum(tablica *s)
     }
 
     else
-        printf("brak sygnału do odszumienia\n,m");
+        printf("brak sygnału do odszumienia\n");
 }
 void tablica_init(tablica *s)
 {
@@ -306,6 +310,7 @@ void generuj(tablica *s)
         printf("Podaj częstotliwość sygnału [Hz]: ");
         if(scanf("%lf", &temp)!=1)
         {
+            temp=0;
             error();
         }
         else
@@ -314,6 +319,7 @@ void generuj(tablica *s)
             printf("Podaj częstotliwość próbkowania [Hz]: ");
             if(scanf("%lf",&temp)!=1)
             {
+                temp=0;
                 error();
             }
             else
@@ -322,6 +328,7 @@ void generuj(tablica *s)
                 printf("Podaj przesunięcie fazowe [stopnie]: ");
                 if(scanf("%lf",&temp)!=1)
                 {
+                    temp=0;
                     error();
                 }
                 else
@@ -330,6 +337,7 @@ void generuj(tablica *s)
                     printf("Podaj czas trwania sygnału [s]: ");
                     if(scanf("%lf", &temp)!=1)
                     {
+                        temp=0;
                         error();
                     }
                     else
