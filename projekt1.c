@@ -81,7 +81,7 @@ int main(void)
             }
         }
     }
-    if(s.amplituda!=0) //zabezpieczenie przed wywołaniem funkcji free bez wczesniejszego malloc
+    if(s.flaga[0]==1) //zabezpieczenie przed wywołaniem funkcji free bez wczesniejszego malloc
     {
         freetab(&s);
     }
